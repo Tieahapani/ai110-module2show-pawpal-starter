@@ -15,8 +15,11 @@ A `ScheduledTask` dataclass was also added as a result type — it wraps a Task 
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+Yes — two notable changes from the original UML:
+
+1. **`ScheduledTask` was added** as a fifth class not in the original UML. During implementation it became clear that `generate_plan()` needed to return more than just a list of `Task` objects — it needed to attach a start time and a reasoning string to each scheduled item. A separate result type kept `Task` clean and single-purpose.
+
+2. **`get_all_tasks()` returns `(Pet, Task)` pairs instead of just `Task` objects.** The original UML had it returning `list[Task]`, but the Scheduler needs to know which pet each task belongs to in order to populate `ScheduledTask.pet`. Changing the return type to `list[tuple[Pet, Task]]` was the simplest fix without restructuring the classes.
 
 ---
 
@@ -24,13 +27,11 @@ A `ScheduledTask` dataclass was also added as a result type — it wraps a Task 
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+The scheduler considers three constraints: task priority (high/medium/low), the owner's daily time budget (available_minutes), and the owner's soft time-of-day preferences (morning/afternoon/evening/anytime). Priority was chosen as the primary constraint because missing a high-priority task like medication is more harmful than missing a low-priority grooming session. Time budget is the hard limit — no task is scheduled if it would exceed it. Time preference is a tiebreaker used to order tasks of equal priority rather than a hard deadline.
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+The scheduler uses a greedy algorithm — it sorts all tasks by priority and time preference, then accepts each one in order as long as it fits within the remaining time budget. This means a single long low-priority task at the end of the list can be skipped even if its duration would have fit had a shorter medium-priority task been dropped earlier. This is a reasonable tradeoff for a daily pet care scenario: owners generally want the most important tasks done first rather than an optimal packing of the schedule, and the greedy approach is simple enough to reason about and explain to the user.
 
 ---
 
