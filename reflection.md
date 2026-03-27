@@ -4,8 +4,14 @@
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+Four classes were designed based on the core user actions: adding a pet, managing tasks, and generating a daily schedule.
+
+- **Task** — holds what needs to happen (title, type, duration, priority, time preference). Uses Python dataclass for clean attribute declaration. Responsible only for describing a single care action.
+- **Pet** — holds pet info (name, species, age) and owns a list of Tasks. Responsible for managing tasks assigned to that pet.
+- **Owner** — holds owner info (name) and daily available time budget (in minutes). Owns a list of Pets. Provides a helper to collect all tasks across all pets.
+- **Scheduler** — takes an Owner and generates a prioritized daily plan. Responsible for sorting tasks (high → medium → low), fitting them within the time budget, detecting conflicts (tasks that don't fit), and explaining the plan.
+
+A `ScheduledTask` dataclass was also added as a result type — it wraps a Task with a start time and a reasoning string so the UI can display both the plan and the rationale.
 
 **b. Design changes**
 
