@@ -39,13 +39,11 @@ The scheduler uses a greedy algorithm — it sorts all tasks by priority and tim
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+AI was used throughout every phase of this project. In Phase 1, it helped brainstorm the four-class architecture and generate the Mermaid.js UML diagram from a plain-English description of the problem. In Phase 2, it scaffolded the class skeletons using Python dataclasses and helped implement the greedy scheduling algorithm. In Phases 3 and 4, it helped identify that `st.session_state` was needed to prevent Streamlit from resetting the Owner on every rerun, and it suggested the sorted sweep approach for conflict detection. The most useful prompts were specific ones tied to a concrete file or method — for example, asking "how should the Scheduler retrieve all tasks from Owner's pets given this skeleton?" produced a much better answer than a vague open-ended question.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+The initial conflict detection implementation used a nested loop (O(n²)) that checked every pair of tasks. The AI suggested keeping it for readability since the task count is small. We rejected that suggestion and replaced it with a sorted sweep (O(n log n)) with an early `break` — both more efficient AND still readable because the `break` makes the algorithm's intent explicit. The change was verified by running the existing test suite (all 27 tests passed) and checking that the conflict warning output in `main.py` remained correct.
 
 ---
 
@@ -53,13 +51,13 @@ The scheduler uses a greedy algorithm — it sorts all tasks by priority and tim
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+The test suite covers 27 cases across: Task priority values and `mark_complete()` behavior; daily and weekly recurrence generating the correct next due date using `timedelta`; Pet task addition and removal; Owner task aggregation across multiple pets; Scheduler plan generation respecting the time budget and priority ordering; `sort_by_time()` returning chronological order; `filter_tasks()` filtering by pet name and completion status; `detect_time_conflicts()` correctly flagging overlapping `requested_start` windows and ignoring tasks without one; and edge cases including a pet with no tasks, a single task longer than the entire budget, and zero available minutes.
+
+These tests matter because the scheduler's core promise — "most important tasks first, within your time" — is easy to break silently. A bug in priority sorting or time budget calculation would produce a wrong schedule with no obvious error message, so automated tests are the only reliable way to catch regressions.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+Confidence level: ★★★★☆. The backend logic is thoroughly tested and all 27 tests pass. The main gap is end-to-end UI testing — Streamlit interactions cannot be verified by pytest without a browser automation tool like Playwright or Selenium, which is out of scope for this project. Edge cases that would be worth testing next: tasks with identical priority and duration (checking stable sort order), an owner with 10+ pets each with 20+ tasks (performance at scale), and recurring tasks across a month boundary (e.g., marking complete on March 31st).
 
 ---
 
@@ -67,12 +65,12 @@ The scheduler uses a greedy algorithm — it sorts all tasks by priority and tim
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+The CLI-first workflow was the most valuable part of the process. Building and verifying `pawpal_system.py` through `main.py` before touching `app.py` meant that when the Streamlit integration was written, it worked on the first try. Every bug was caught at the backend level where it was easy to debug, not buried inside a UI callback. The `_build_plan()` refactor — extracting a shared private method so the scheduling algorithm only runs once — was also satisfying because it made the code both faster and cleaner at the same time.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+The `requested_start` field on Task is optional, which means conflict detection only works for tasks where the owner explicitly sets a preferred time. A better design would use the scheduler-assigned start times to detect conflicts automatically, so all tasks are checked without any extra input from the user. Additionally, the recurring task feature currently requires the caller to manually call `pet.add_task(next_task)` after `mark_complete()` — this could be handled automatically inside the Scheduler to reduce friction.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+The most important lesson was that AI works best as a collaborator at the design and implementation level, not as a replacement for human judgment about tradeoffs. The AI could generate code quickly, but every significant decision — which algorithm to use, what the return type of `get_all_tasks()` should be, whether to optimize for readability or performance — required stopping, evaluating the suggestion in context, and sometimes pushing back. Being the "lead architect" meant owning those decisions, using AI to accelerate execution, and verifying every output rather than accepting it as correct.

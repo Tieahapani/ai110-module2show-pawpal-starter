@@ -129,9 +129,17 @@ else:
         scheduler = Scheduler(owner)
         plan = scheduler.generate_plan()
         conflicts = scheduler.detect_conflicts()
+        time_warnings = scheduler.detect_time_conflicts()
 
+        # --- Time conflict warnings ---
+        if time_warnings:
+            for w in time_warnings:
+                st.warning(w)
+
+        # --- Sorted daily plan ---
         st.subheader("Daily Plan")
         if plan:
+            sorted_plan = scheduler.sort_by_time(plan)
             plan_rows = [
                 {
                     "Start": item.start_time,
@@ -141,7 +149,7 @@ else:
                     "Priority": item.task.priority.value,
                     "Reason": item.reason,
                 }
-                for item in plan
+                for item in sorted_plan
             ]
             st.table(plan_rows)
 
@@ -153,8 +161,39 @@ else:
         else:
             st.warning("No tasks could be scheduled within your available time.")
 
+        # --- Budget conflicts ---
         if conflicts:
             st.subheader("Could Not Fit")
             st.caption("These tasks were skipped because the time budget ran out:")
             for t in conflicts:
                 st.markdown(f"- **{t.title}** ({t.duration_minutes} min, {t.priority.value} priority)")
+
+        # --- Filter panel ---
+        st.divider()
+        st.subheader("Filter Tasks")
+        col1, col2 = st.columns(2)
+        with col1:
+            pet_filter = st.selectbox(
+                "Filter by pet", ["All"] + [p.name for p in owner.pets]
+            )
+        with col2:
+            status_filter = st.selectbox(
+                "Filter by status", ["All", "Incomplete", "Completed"]
+            )
+
+        pet_name_arg = None if pet_filter == "All" else pet_filter
+        completed_arg = None if status_filter == "All" else (status_filter == "Completed")
+        filtered = scheduler.filter_tasks(pet_name=pet_name_arg, completed=completed_arg)
+
+        if filtered:
+            st.table([
+                {
+                    "Pet": p.name,
+                    "Task": t.title,
+                    "Priority": t.priority.value,
+                    "Done": "✓" if t.completed else "○",
+                }
+                for p, t in filtered
+            ])
+        else:
+            st.info("No tasks match the selected filters.")
