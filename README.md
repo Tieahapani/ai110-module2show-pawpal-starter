@@ -75,6 +75,10 @@ The test suite (`tests/test_pawpal.py`) covers 27 cases across:
 
 **Confidence level: ★★★★☆** — Core scheduling logic and all algorithmic features are fully verified. The one untested area is the Streamlit UI layer, which requires browser interaction to test end-to-end.
 
+## Demo
+
+![PawPal+ Demo](demo_screenshot.png)
+
 ## Smarter Scheduling
 
 PawPal+ includes several algorithms that make the scheduler more intelligent:
